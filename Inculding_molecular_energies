@@ -1,0 +1,40 @@
+# installing openfermion library
+pip install openfermion openfermionpsi4 openfermionpyscf openfermion-dwave dwave-ocean-sdk
+
+import openfermion as of
+from openfermion.transforms import get_sparse_operator, jordan_wigner
+from openfermion.hamiltonians import MolecularData, load_molecular_hamiltonian
+from openfermion.linalg import get_ground_state
+from openfermion.transforms import get_qubit_op
+from dwave.system import DWaveSampler, EmbeddingComposite
+from qubovert.utils import pauliword_to_qubo
+from qubovert import QUBO
+
+# Set molecule parameters
+basis = 'sto-3g'
+multiplicity = 1
+geometry = [('H', (0.0, 0.0, 0.0)), ('H', (0.0, 0.0, 0.7414))]
+molecule = MolecularData(geometry, basis, multiplicity)
+h2_molecule = of.hamiltonians.load_molecular_hamiltonian(molecule)
+
+# Map the Fermionic Hamiltonian to a qubit Hamiltonian using the Jordan-Wigner transformation
+qubit_hamiltonian = jordan_wigner(h2_molecule)
+
+# Create the QUBO matrix
+qubo_matrix = pauliword_to_qubo(qubit_hamiltonian)
+
+# Convert the QUBO matrix into a QUBO object
+qubo = QUBO(qubo_matrix)
+
+# Set up the D-Wave sampler and embedding composite
+sampler = DWaveSampler(solver={'qpu': True})
+embedding_sampler = EmbeddingComposite(sampler)
+
+# Sample from the QUBO
+num_reads = 1000
+response = embedding_sampler.sample_qubo(qubo.Q, num_reads=num_reads)
+
+# Calculate the ground state energy from the lowest energy sample
+lowest_energy_sample = response.first.sample
+ground_state_energy = qubo.energy(lowest_energy_sample)
+print(f"Ground state energy: {ground_state_energy}")
