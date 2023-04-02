@@ -1,0 +1,27 @@
+import numpy as np
+from dwave.system import DWaveSampler, EmbeddingComposite
+
+# Define the QUBO problem
+Q = {(0, 0): 1, (1, 1): 1, (2, 2): 1, (0, 1): -2, (1, 2): -2, (0, 2): 2}
+
+# Set up the D-Wave sampler and embedding composite
+sampler = DWaveSampler(solver={'qpu': True})
+embedding_sampler = EmbeddingComposite(sampler)
+
+# Sample from the QUBO
+num_reads = 1000
+response = embedding_sampler.sample_qubo(Q, num_reads=num_reads)
+
+# Print the lowest energy sample
+lowest_energy_sample = response.first.sample
+print(f"Lowest energy sample: {lowest_energy_sample}")
+
+
+
+
+## Result obtained on local computer:  Lowest energy sample: {0: 0, 1: 0, 2: 0}
+
+
+
+
+## This example does not include molecular energies but serves as basis introduction to using the D-wave quantum annealer.
